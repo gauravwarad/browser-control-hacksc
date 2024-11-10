@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from threading import Lock
-import time
 
 app = Flask(__name__)
 
@@ -14,16 +13,20 @@ lock = Lock()  # Ensuring thread safety
 # Endpoint to set scroll action to up or down using query parameters
 @app.route('/scroll', methods=['GET'])
 def scroll():
-    direction = request.args.get('direction')  # Get 'direction' from query parameters
+    # Check for both 'action' and 'direction' in query parameters
+    action = request.args.get('action')
+    direction = request.args.get('direction')
     
-    if direction not in ['up', 'down']:
-        return jsonify({"error": "Invalid direction. Use 'up' or 'down'."}), 400
-    
+    # Validate action and direction
+    if action != "scroll" or direction not in ['up', 'down']:
+        return jsonify({"error": "Invalid parameters. Use 'action=scroll' and 'direction=up' or 'down'."}), 400
+
+    # Update shared state with action and direction
     with lock:
-        state["action"] = "scroll"
+        state["action"] = action
         state["direction"] = direction
-    
-    return jsonify({"status": f"Action set to scroll {direction}"}), 200
+
+    return jsonify({"status": f"Action set to {action} {direction}"}), 200
 
 # Endpoint to check if there's an action to be performed
 @app.route('/check_action', methods=['GET'])
